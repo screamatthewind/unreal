@@ -1,10 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HowTo_PlayerCamera.h"
 #include "PawnWithCamera.h"
+#include "HowTo_PlayerCamera.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include <Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h>
+#include <Runtime/Engine/Public/DrawDebugHelpers.h>
 
 // Sets default values
 APawnWithCamera::APawnWithCamera()
@@ -89,6 +91,20 @@ void APawnWithCamera::Tick(float DeltaTime)
 		}
 	}
 
+	FBoxSphereBounds bounds;
+
+	AActor* AMultiGpGate_Mesh = GetActorByName("multiGpGate_Mesh");
+
+	FBox bb = AMultiGpGate_Mesh->GetComponentsBoundingBox();
+	FBox bb2 = AMultiGpGate_Mesh->CalculateComponentsBoundingBoxInLocalSpace();
+	FVector bbSize = bb.GetSize();
+
+	DrawDebugBox(GetWorld(), AMultiGpGate_Mesh->GetActorLocation(), AMultiGpGate_Mesh->GetComponentsBoundingBox().GetExtent(), FColor::Green, true, -1, 0, 5);
+
+	// GrabScreenshot();
+}
+
+void APawnWithCamera::GrabScreenshot() {
 	// Generate a filename based on the current date
 	const FDateTime Now = FDateTime::Now();
 
@@ -149,4 +165,36 @@ void APawnWithCamera::ZoomIn()
 void APawnWithCamera::ZoomOut()
 {
 	bZoomingIn = false;
+}
+
+TArray<FString> APawnWithCamera::GetActors()
+{
+	TArray<FString> actors;
+
+	for (TObjectIterator<AActor> Itr; Itr; ++Itr)
+	{
+		if (Itr->IsA(AActor::StaticClass()))
+		{
+			actors.Add(Itr->GetActorLabel());
+		}
+	}
+	return actors;
+}
+
+AActor *APawnWithCamera::GetActorByName(FString FindActorName)
+{
+	AActor *result = nullptr;
+
+	for (TObjectIterator<AActor> Itr; Itr; ++Itr)
+	{
+		if (Itr->IsA(AActor::StaticClass()))
+		{
+			if (Itr->GetActorLabel().Equals(FindActorName))
+			{
+				result = *Itr;
+				break;
+			}
+		}
+	}
+	return result;
 }
