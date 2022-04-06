@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include <Runtime/Engine/Classes/Engine/SceneCapture2D.h>
 #include "PawnWithCamera.generated.h"
 
 UCLASS()
@@ -33,6 +34,8 @@ protected:
 	FVector2D CameraInput;
 	float ZoomFactor;
 	bool bZoomingIn;
+
+	void SetupColorCaptureComponent(ASceneCapture2D* captureComponent);
 
 public:	
 	// Called every frame

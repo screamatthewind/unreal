@@ -7,6 +7,9 @@
 #include "Camera/CameraComponent.h"
 #include <Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h>
 #include <Runtime/Engine/Public/DrawDebugHelpers.h>
+#include "Runtime/Engine/Classes/Components/SceneCaptureComponent2D.h"
+#include "Runtime/Engine/Classes/Engine/TextureRenderTarget2D.h"
+#include <Runtime/Engine/Classes/Engine/SceneCapture2D.h>
 
 // Sets default values
 APawnWithCamera::APawnWithCamera()
@@ -28,8 +31,8 @@ APawnWithCamera::APawnWithCamera()
 	//Assign SpringArm class variables.
 	SpringArmComp->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 50.0f), FRotator(-60.0f, 0.0f, 0.0f));
 	SpringArmComp->TargetArmLength = 400.f;
-	SpringArmComp->bEnableCameraLag = true;
-	SpringArmComp->CameraLagSpeed = 3.0f;
+	SpringArmComp->bEnableCameraLag = false;
+	SpringArmComp->CameraLagSpeed = 0.0f;
 
 	//Take control of the default Player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
@@ -39,7 +42,8 @@ APawnWithCamera::APawnWithCamera()
 void APawnWithCamera::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+//	SetupColorCaptureComponent(ColorCaptureComponents);
 }
 
 // Called every frame
@@ -74,7 +78,8 @@ void APawnWithCamera::Tick(float DeltaTime)
 	//Rotate our camera's pitch, but limit it so we're always looking downward
 	{
 		FRotator NewRotation = SpringArmComp->GetComponentRotation();
-		NewRotation.Pitch = FMath::Clamp(NewRotation.Pitch + CameraInput.Y, -80.0f, -15.0f);
+		NewRotation.Pitch = FMath::Clamp(NewRotation.Pitch + CameraInput.Y, -80.0f, 0.0f);
+		// NewRotation.Pitch = NewRotation.Pitch + CameraInput.Y;
 		SpringArmComp->SetWorldRotation(NewRotation);
 	}
 
@@ -198,3 +203,30 @@ AActor *APawnWithCamera::GetActorByName(FString FindActorName)
 	}
 	return result;
 }
+
+void APawnWithCamera::SetupColorCaptureComponent(ASceneCapture2D* captureComponent) {
+
+	// Create RenderTargets
+	UTextureRenderTarget2D* renderTarget2D = NewObject<UTextureRenderTarget2D>();
+
+	// Set FrameWidth and FrameHeight
+	renderTarget2D->TargetGamma = 1.2f;// for Vulkan //GEngine->GetDisplayGamma(); // for DX11/12
+
+	// Setup the RenderTarget capture format
+	renderTarget2D->InitAutoFormat(256, 256); // some random format, got crashing otherwise
+	int32 frameWidth = 640;
+	int32 frameHeight = 480;
+	renderTarget2D->InitCustomFormat(frameWidth, frameHeight, PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
+	renderTarget2D->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+	renderTarget2D->bGPUSharedFlag = true; // demand buffer on GPU
+
+	// Assign RenderTarget
+	captureComponent->GetCaptureComponent2D()->TextureTarget = renderTarget2D;
+
+	// Set Camera Properties
+	captureComponent->GetCaptureComponent2D()->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+	captureComponent->GetCaptureComponent2D()->ShowFlags.SetTemporalAA(true);
+	// lookup more showflags in the UE4 documentation.. 
+}
+
+
