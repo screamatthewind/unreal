@@ -78,3 +78,11 @@
 
 # starter content
 **/StarterContent/*
+
+# purchased plugins
+**/Content/ImageSegmentation/* 
+
+# output data
+**/Segmentation/Images/*
+**/Segmentation/Masks/*
+**/Segmentation/Metadata/*
